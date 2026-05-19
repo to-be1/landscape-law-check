@@ -3,7 +3,7 @@ import pandas as pd
 import math
 
 # ---------------------------------------------------------
-# 페이지 기본 설정 및 스타일
+# 페이지 기본 설정
 # ---------------------------------------------------------
 st.set_page_config(page_title="조경 법규 자동 검토 시스템", layout="wide")
 
@@ -120,11 +120,11 @@ bus_stop_plan = st.sidebar.number_input("🚌 계획 통학버스 정류장 (개
 bike_parking_plan = st.sidebar.number_input("🚲 계획 자전거보관소 (대)", min_value=0, value=130, step=5)
 garden_area_plan = st.sidebar.number_input("🧑‍🌾 계획 텃밭/부속정원 면적 (㎡)", min_value=0.0, value=50.0, step=5.0)
 
-# 엑셀 및 표 출력을 위한 데이터 저장용 리스트
+# 엑셀 출력을 위한 데이터 저장용 리스트
 report_data = []
 
 # ---------------------------------------------------------
-# 법규 계산 로직 (수목 식재 및 어린이놀이터 총량제 정밀 교정 완료)
+# 법규 계산 로직 (수목 식재 및 어린이놀이터 총량제 완벽 교정)
 # ---------------------------------------------------------
 req_natural_ratio = 0.10
 if "상업" in zone_type:
@@ -134,15 +134,15 @@ elif "공업" in zone_type:
 else:
     req_landscape_ratio = 0.15 if "서울" in region else 0.10
 
-# 정밀 법적근거 매핑 (시행령 조항 완벽 보완)
+# 실무용 상세 조항 근거 매핑
 law_landscape = f"건축법 제42조 및 {region} 건축조례"
-law_natural = "국토교통부 조경기준 제12조 (자연지반 식재 등)"
+law_natural = "국토교통부 조경기준 제12조"
 law_eco = "환경영향평가법 및 관련 지구단위계획지침"
 law_open_space = "건축법 제43조 및 동법 시행령 제27조의2"
-law_total_tree = "국토교통부 조경기준 제10조 (식재수량 및 재식기준)"
-law_evergreen = "국토교통부 조경기준 제13조 (상록수 식재 비율)"
+law_total_tree = "국토교통부 조경기준 제10조"
+law_evergreen = "국토교통부 조경기준 제13조"
 law_special = "지자체 조경기준 심의 가이드라인"
-law_community = "주택건설기준 등에 관한 규정 제55조의2 (주민공동시설)"
+law_community = "주택건설기준 등에 관한 규정 제55조의2"
 law_bus_stop = "주택건설기준 등에 관한 규정 제26조제6항"
 law_bike = "자전거 이용 활성화에 관한 법률 시행령 제7조 [별표 1]"
 
@@ -154,7 +154,7 @@ legal_natural_ground = legal_landscape_area * req_natural_ratio
 legal_total_tree = math.ceil(legal_landscape_area * 0.2)
 legal_total_shrub = math.ceil(legal_landscape_area * 1.0)
 
-# 법정 의무 총량 기준 비율 계산
+# 법정 의무 총량 기준 수목 식재 세부 비율 고정 계산
 req_evergreen_ratio = 0.20      
 req_special_ratio = 0.10
 req_evergreen_shrub_ratio = 0.20
@@ -169,15 +169,16 @@ if building_type != "공동주택 (아파트)":
     sports_val_str, sports_pass, sports_formula_text = "해당사항 없음", "N/A", "비대상 건축물"
     bus_val_str, bus_pass, bus_formula_text = "해당사항 없음", "N/A", "비대상 건축물"
 else:
+    # 주민공동시설 총량제 기준 산식 적용
     if household_count < 100:
         total_community_legal = 0
         play_formula_text = "100세대 미만: 총량제 의무 없음"
     elif household_count < 1000:
         total_community_legal = household_count * 2.5
-        play_formula_text = f"총량 대상 (100~1000미만): 세대수 × 2.5㎡ (의무 총량: {total_community_legal:,.1f}㎡)"
+        play_formula_text = f"총량 대상: 세대수 × 2.5㎡ (의무: {total_community_legal:,.1f}㎡)"
     else:
         total_community_legal = (household_count * 3.0) + 500
-        play_formula_text = f"총량 대상 (1000세대 이상): 500㎡ + (세대수 × 3㎡) (의무 총량: {total_community_legal:,.1f}㎡)"
+        play_formula_text = f"총량 대상: 500㎡ + (세대수 × 3㎡) (의무: {total_community_legal:,.1f}㎡)"
         
     play_val_str = f"총량내 확보 / {play_area_plan:,.1f} ㎡"
     play_pass = True if play_area_plan > 0 else False
@@ -186,14 +187,14 @@ else:
         sports_formula_text = "300세대 미만: 의무 없음"
         sports_val_str, sports_pass = f"0 ㎡ / {sports_area_plan:,.1f} ㎡", True
     else:
-        sports_formula_text = "주민공동시설 총량제 합산 원칙 적용"
+        sports_formula_text = "주민공동시설 총량제 합산 설치 대상"
         sports_val_str, sports_pass = f"총량내 확보 / {sports_area_plan:,.1f} ㎡", sports_area_plan > 0
         
     if household_count < 500:
         bus_formula_text = "500세대 미만: 의무 없음"
         bus_val_str, bus_pass = f"0 개소 / {bus_stop_plan} 개소", True
     else:
-        bus_formula_text = "500세대 이상: 단지 내 1개소 이상 설치 의무"
+        bus_formula_text = "500세대 이상: 단지 내 1개소 이상 설치"
         bus_val_str, bus_pass = f"1 개소 / {bus_stop_plan} 개소", bus_stop_plan >= 1
 
 legal_bike_parking = math.ceil(parking_count * 0.20)
@@ -210,101 +211,84 @@ else:
     open_space_text, open_space_val_str, open_space_pass = "대지면적의 7% 이상 확보", f"{legal_open_space:,.1f} ㎡ / {open_space_plan:,.1f} ㎡", open_space_plan >= legal_open_space
 
 # ---------------------------------------------------------
-# 데이터 가공 및 테이블 빌더 (데이터 적재용 헬퍼)
+# 순정 스트림릿 기반 리포트 출력 및 데이터 수집 함수
 # ---------------------------------------------------------
-def collect_row(category, title, legal_text, law_source, legal_plan_compare_str, is_pass):
-    if is_pass == "N/A" or legal_plan_compare_str == "해당 없음": 
-        status = "<span style='color: #666666;'>➖ 제외</span>"
-        csv_status = "제외"
-    elif is_pass: 
-        status = "<span style='color: #2E7D32; font-weight: bold;'>✅ 적합</span>"
-        csv_status = "적합"
-    else: 
-        status = "<span style='color: #C62828; font-weight: bold;'>❌ 부족</span>"
-        csv_status = "부족"
-        
+def print_law_row(category, title, legal_text, law_source, legal_plan_compare_str, is_pass):
+    # 4분할 레이아웃으로 넓은 가로폭 확보하여 절대 잘리지 않음
+    c1, c2, c3, c4 = st.columns([1.5, 3.2, 2.3, 0.8])
+    
+    with c1:
+        st.markdown(f"**{title}**")
+        st.caption(f"({category})")
+    with c2:
+        st.write(legal_text)
+        st.caption(f"📍 근거: {law_source}")
+    with c3:
+        st.code(legal_plan_compare_str, language="text")
+    with c4:
+        if is_pass == "N/A" or legal_plan_compare_str == "해당 없음":
+            st.info("➖ 제외")
+            csv_status = "제외"
+        elif is_pass:
+            st.success("✅ 적합")
+            csv_status = "적합"
+        else:
+            st.error("❌ 부족")
+            csv_status = "부족"
+            
+    st.markdown("<div style='margin: -5px 0 10px 0; border-bottom: 1px solid #EEEEEE;'></div>", unsafe_allow_html=True)
+    
     report_data.append({
         "검토 분류": category,
         "검토 항목": title,
         "법적 기준 및 산식": legal_text,
         "관련 근거 및 상세 법령 조항": law_source,
         "법정 요구치 / 계획 수치": legal_plan_compare_str,
-        "적합 여부": csv_status,
-        "_view_status": status # 웹 화면 HTML 출력용
+        "적합 여부": csv_status
     })
 
-# 데이터 수집 실행
-cat1 = "1. 면적 검토"
-collect_row(cat1, "조경 면적", f"대지면적의 {req_landscape_ratio*100}%", law_landscape, f"{legal_landscape_area:,.1f} ㎡ / {landscaping_area_plan:,.1f} ㎡", landscaping_area_plan >= legal_landscape_area)
-collect_row(cat1, "자연 지반", f"조경면적의 {req_natural_ratio*100}%", law_natural, f"{legal_natural_ground:,.1f} ㎡ / {natural_ground_plan:,.1f} ㎡", natural_ground_plan >= legal_natural_ground)
-collect_row(cat1, "생태면적률", "대지면적의 30.0% 이상", law_eco, f"30.0 % / {eco_area_plan:.1f} %", eco_area_plan >= 30.0)
-collect_row(cat1, "공개 공지", open_space_text, law_open_space, open_space_val_str, open_space_pass)
-
-cat2 = "2. 식재 검토"
-collect_row(cat2, "전체 교목 수량", "의무조경면적 1㎡당 0.2주", law_total_tree, f"{legal_total_tree:,.0f} 주 / {tree_count:,.0f} 주", tree_count >= legal_total_tree)
-collect_row(cat2, " - 상록 교목", f"교목 의무량의 {req_evergreen_ratio*100}% 이상", law_evergreen, f"{legal_evergreen_tree:,.0f} 주 / {evergreen_tree_count:,.0f} 주", evergreen_tree_count >= legal_evergreen_tree)
-collect_row(cat2, " - 특성수 수량", f"교목 의무량의 {req_special_ratio*100}% 이상", law_special, f"{legal_special_tree:,.0f} 주 / {special_tree_count:,.0f} 주", special_tree_count >= legal_special_tree)
-collect_row(cat2, "전체 관목 수량", "의무조경면적 1㎡당 1.0주", law_total_tree, f"{legal_total_shrub:,.0f} 주 / {shrub_count:,.0f} 주", shrub_count >= legal_total_shrub)
-collect_row(cat2, " - 상록 관목", f"관목 의무량의 {req_evergreen_shrub_ratio*100}% 이상", law_evergreen, f"{legal_evergreen_shrub:,.0f} 주 / {evergreen_shrub_count:,.0f} 주", evergreen_shrub_count >= legal_evergreen_shrub)
-
-cat3 = "3. 부대/복리시설 검토"
-collect_row(cat3, "어린이놀이터", play_formula_text, law_community, play_val_str, play_pass)
-collect_row(cat3, "주민운동시설", sports_formula_text, law_community, sports_val_str, sports_pass)
-collect_row(cat3, "통학버스 정류장", bus_formula_text, law_bus_stop, bus_val_str, bus_pass)
-collect_row(cat3, "자전거 보관소", "자동차 주차대수의 20% 이상", law_bike, f"{legal_bike_parking:,.0f} 대 / {bike_parking_plan:,.0f} 대", bike_parking_plan >= legal_bike_parking)
-collect_row(cat3, "텃밭 / 부속정원", "설치 권장 (녹색건축인증 / 지자체 조례)", "녹색건축인증기준 지침", f"권장 / {garden_area_plan:,.1f} ㎡", True)
-
 # ---------------------------------------------------------
-# HTML기반 와이드 테이블 렌더링 (st.markdown을 통한 무결점 출력)
+# 웹 화면 리포트 인터페이스 렌더링
 # ---------------------------------------------------------
 st.markdown("### 📋 실시간 종합 법규 검토 리포트")
 st.info(f"검토 조건: {region} | {zone_type} | {building_type} | 대지면적: {site_area:,.1f}㎡")
+st.write("")
 
-# 테이블 레이아웃을 잡아주는 웹 표준 CSS 스타일
-table_html = """
-<style>
-    .law-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; text-align: left; }
-    .law-table th { background-color: #2E5A44; color: white; padding: 12px; font-weight: 600; }
-    .law-table td { padding: 12px; border-bottom: 1px solid #E0E0E0; vertical-align: middle; white-space: normal; word-break: keep-all; }
-    .law-table tr:hover { background-color: #F9F9F9; }
-</style>
-<table class="law-table">
-    <thead>
-        <tr>
-            <th style="width: 14%;">검토 분류</th>
-            <th style="width: 14%;">검토 항목</th>
-            <th style="width: 25%;">법적 기준 및 산식</th>
-            <th style="width: 25%;">관련 근거 및 상세 법령 조항</th>
-            <th style="width: 14%;">법정 요구치 / 계획</th>
-            <th style="width: 8%;">결과</th>
-        </tr>
-    </thead>
-    <tbody>
-"""
+# 컬럼 헤더 명시
+h1, h2, h3, h4 = st.columns([1.5, 3.2, 2.3, 0.8])
+h1.markdown("**🔍 검토 항목 명칭**")
+h2.markdown("**📜 법적 기준 및 가이드라인**")
+h3.markdown("**📊 법정요구 수치 / 내 계획**")
+h4.markdown("**📢 결과**")
+st.markdown("<div style='border-bottom: 2px solid #2E5A44; margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-for row in report_data:
-    table_html += f"""
-        <tr>
-            <td><b>{row['검토 분류']}</b></td>
-            <td>{row['검토 항목']}</td>
-            <td>{row['법적 기준 및 산식']}</td>
-            <td style="color: #4A4A4A; font-size: 13px;">{row['관련 근거 및 상세 법령 조항']}</td>
-            <td><code>{row['법정 요구치 / 계획 수치']}</code></td>
-            <td>{row['_view_status']}</td>
-        </tr>
-    """
-table_html += "</tbody></table>"
+# 1. 면적 검토 영역
+print_law_row("1. 면적 검토", "조경 면적", f"대지면적의 {req_landscape_ratio*100}% 이상 의무 확보", law_landscape, f"{legal_landscape_area:,.1f} ㎡ / {landscaping_area_plan:,.1f} ㎡", landscaping_area_plan >= legal_landscape_area)
+print_law_row("1. 면적 검토", "자연 지반", f"의무 조경면적의 {req_natural_ratio*100}% 이상 확보", law_natural, f"{legal_natural_ground:,.1f} ㎡ / {natural_ground_plan:,.1f} ㎡", natural_ground_plan >= legal_natural_ground)
+print_law_row("1. 면적 검토", "생태면적률", "대지면적의 30.0% 이상 도입 권장", law_eco, f"30.0 % / {eco_area_plan:.1f} %", eco_area_plan >= 30.0)
+print_law_row("1. 면적 검토", "공개 공지", open_space_text, law_open_space, open_space_val_str, open_space_pass)
 
-# [핵심 교정] unsafe_allow_html=True를 지정해 브라우저가 HTML 코드를 실제 표로 해독하게 만듭니다.
-st.markdown(table_html, unsafe_allow_html=True)
+# 2. 식재 검토 영역
+print_law_row("2. 식재 검토", "전체 교목 수량", "의무조경면적 1㎡당 최소 0.2주 식재", law_total_tree, f"{legal_total_tree:,.0f} 주 / {tree_count:,.0f} 주", tree_count >= legal_total_tree)
+print_law_row("2. 식재 검토", " - 상록 교목", f"법정 교목 의무 수량의 {req_evergreen_ratio*100}% 이상 필수 상록수 식재", law_evergreen, f"{legal_evergreen_tree:,.0f} 주 / {evergreen_tree_count:,.0f} 주", evergreen_tree_count >= legal_evergreen_tree)
+print_law_row("2. 식재 검토", " - 특성수 수량", f"법정 교목 의무 수량의 {req_special_ratio*100}% 이상 지자체 권장수 적용", law_special, f"{legal_special_tree:,.0f} 주 / {special_tree_count:,.0f} 주", special_tree_count >= legal_special_tree)
+print_law_row("2. 식재 검토", "전체 관목 수량", "의무조경면적 1㎡당 최소 1.0주 식재", law_total_tree, f"{legal_total_shrub:,.0f} 주 / {shrub_count:,.0f} 주", shrub_count >= legal_total_shrub)
+print_law_row("2. 식재 검토", " - 상록 관목", f"법정 관목 의무 수량의 {req_evergreen_shrub_ratio*100}% 이상 필수 상록수 식재", law_evergreen, f"{legal_evergreen_shrub:,.0f} 주 / {evergreen_shrub_count:,.0f} 주", evergreen_shrub_count >= legal_evergreen_shrub)
+
+# 3. 부대시설 검토 영역
+print_law_row("3. 부대시설 검토", "어린이놀이터", play_formula_text, law_community, play_val_str, play_pass)
+print_law_row("3. 부대시설 검토", "주민운동시설", sports_formula_text, law_community, sports_val_str, sports_pass)
+print_law_row("3. 부대시설 검토", "통학버스 정류장", bus_formula_text, law_bus_stop, bus_val_str, bus_pass)
+print_law_row("3. 부대시설 검토", "자전거 보관소", "전체 자동차 주차대수의 20% 이상 설치 의무", law_bike, f"{legal_bike_parking:,.0f} 대 / {bike_parking_plan:,.0f} 대", bike_parking_plan >= legal_bike_parking)
+print_law_row("3. 부대시설 검토", "텃밭 / 부속정원", "설치 권장 (녹색건축인증 및 친환경 인센티브 조례 항목)", "녹색건축인증기준 지침 가이드", f"권장 / {garden_area_plan:,.1f} ㎡", True)
 
 # ---------------------------------------------------------
-# 엑셀 다운로드 데이터 생성 및 버튼
+# 엑셀 다운로드 데이터 생성 및 렌더링
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("📥 검토 결과 보고서 출력")
 
-df_report = pd.DataFrame(report_data).drop(columns=["_view_status"])
+df_report = pd.DataFrame(report_data)
 csv_data = df_report.to_csv(index=False).encode('utf-8-sig')
 
 st.download_button(
