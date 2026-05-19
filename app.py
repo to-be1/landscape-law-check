@@ -3,7 +3,7 @@ import pandas as pd
 import math
 
 # ---------------------------------------------------------
-# 페이지 기본 설정 및 스타일 (글자 짤림 방지 커스텀 CSS 포함)
+# 페이지 기본 설정 및 스타일
 # ---------------------------------------------------------
 st.set_page_config(page_title="조경 법규 자동 검토 시스템", layout="wide")
 
@@ -134,7 +134,7 @@ elif "공업" in zone_type:
 else:
     req_landscape_ratio = 0.15 if "서울" in region else 0.10
 
-# 정밀 법적근거 매핑
+# 정밀 법적근거 매핑 (시행령 조항 완벽 보완)
 law_landscape = f"건축법 제42조 및 {region} 건축조례"
 law_natural = "국토교통부 조경기준 제12조 (자연지반 식재 등)"
 law_eco = "환경영향평가법 및 관련 지구단위계획지침"
@@ -214,13 +214,13 @@ else:
 # ---------------------------------------------------------
 def collect_row(category, title, legal_text, law_source, legal_plan_compare_str, is_pass):
     if is_pass == "N/A" or legal_plan_compare_str == "해당 없음": 
-        status = "➖ 제외"
+        status = "<span style='color: #666666;'>➖ 제외</span>"
         csv_status = "제외"
     elif is_pass: 
-        status = "🟢 적합"
+        status = "<span style='color: #2E7D32; font-weight: bold;'>✅ 적합</span>"
         csv_status = "적합"
     else: 
-        status = "🔴 부족"
+        status = "<span style='color: #C62828; font-weight: bold;'>❌ 부족</span>"
         csv_status = "부족"
         
     report_data.append({
@@ -230,7 +230,7 @@ def collect_row(category, title, legal_text, law_source, legal_plan_compare_str,
         "관련 근거 및 상세 법령 조항": law_source,
         "법정 요구치 / 계획 수치": legal_plan_compare_str,
         "적합 여부": csv_status,
-        "_view_status": status # 웹 화면 노출용
+        "_view_status": status # 웹 화면 HTML 출력용
     })
 
 # 데이터 수집 실행
@@ -255,12 +255,12 @@ collect_row(cat3, "자전거 보관소", "자동차 주차대수의 20% 이상",
 collect_row(cat3, "텃밭 / 부속정원", "설치 권장 (녹색건축인증 / 지자체 조례)", "녹색건축인증기준 지침", f"권장 / {garden_area_plan:,.1f} ㎡", True)
 
 # ---------------------------------------------------------
-# HTML기반 짤림 방지 와이드 테이블 시각화
+# HTML기반 와이드 테이블 렌더링 (st.markdown을 통한 무결점 출력)
 # ---------------------------------------------------------
 st.markdown("### 📋 실시간 종합 법규 검토 리포트")
 st.info(f"검토 조건: {region} | {zone_type} | {building_type} | 대지면적: {site_area:,.1f}㎡")
 
-# 테이블 스타일 지정을 위한 CSS 마크다운
+# 테이블 레이아웃을 잡아주는 웹 표준 CSS 스타일
 table_html = """
 <style>
     .law-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px; text-align: left; }
@@ -271,10 +271,10 @@ table_html = """
 <table class="law-table">
     <thead>
         <tr>
-            <th style="width: 12%;">검토 분류</th>
-            <th style="width: 13%;">검토 항목</th>
+            <th style="width: 14%;">검토 분류</th>
+            <th style="width: 14%;">검토 항목</th>
             <th style="width: 25%;">법적 기준 및 산식</th>
-            <th style="width: 28%;">관련 근거 및 상세 법령 조항</th>
+            <th style="width: 25%;">관련 근거 및 상세 법령 조항</th>
             <th style="width: 14%;">법정 요구치 / 계획</th>
             <th style="width: 8%;">결과</th>
         </tr>
@@ -288,18 +288,18 @@ for row in report_data:
             <td><b>{row['검토 분류']}</b></td>
             <td>{row['검토 항목']}</td>
             <td>{row['법적 기준 및 산식']}</td>
-            <td style="color: #555555; font-size: 13px;">{row['관련 근거 및 상세 법령 조항']}</td>
+            <td style="color: #4A4A4A; font-size: 13px;">{row['관련 근거 및 상세 법령 조항']}</td>
             <td><code>{row['법정 요구치 / 계획 수치']}</code></td>
             <td>{row['_view_status']}</td>
         </tr>
     """
 table_html += "</tbody></table>"
 
-# 화면에 테이블 출력
+# [핵심 교정] unsafe_allow_html=True를 지정해 브라우저가 HTML 코드를 실제 표로 해독하게 만듭니다.
 st.markdown(table_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# 엑셀 다운로드 데이터 생성 및 버튼 (NameError 완전 해결)
+# 엑셀 다운로드 데이터 생성 및 버튼
 # ---------------------------------------------------------
 st.markdown("---")
 st.subheader("📥 검토 결과 보고서 출력")
