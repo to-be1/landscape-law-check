@@ -36,7 +36,10 @@ building_type = st.sidebar.selectbox(
 site_area = st.sidebar.number_input("📐 계획 대지면적 (㎡)", min_value=0.0, value=9500.0, step=100.0)
 total_floor_area = st.sidebar.number_input("🏢 연면적 합계 (㎡)", min_value=0.0, value=35000.0, step=500.0)
 household_count = st.sidebar.number_input("👨‍👩‍👧‍👦 신축 계획 세대수", min_value=0, value=85, step=10)
-parking_count = st.sidebar.number_input("🚗 계획 주차대수", min_value=0, value=100, step=10)
+
+# [수정] 법정 주차대수와 계획 주차대수를 분리하여 입력받습니다.
+legal_parking_count = st.sidebar.number_input("🚙 법정 자동차 주차대수", min_value=0, value=350, step=10)
+plan_parking_count = st.sidebar.number_input("🚗 계획 자동차 주차대수", min_value=0, value=400, step=10)
 
 # ---------------------------------------------------------
 # 사이드바: 2. 적용 법규 자동 판별기 
@@ -78,7 +81,6 @@ else:
 st.sidebar.markdown("---")
 st.sidebar.header("🌳 3. 조경 및 시설 계획 수치 입력")
 
-# [완전 자동화] 사용자가 임의로 건드리지 못하게 시스템이 통제합니다.
 is_small_scale = auto_small_scale
 is_eco_target = auto_eco_target
 
@@ -102,13 +104,13 @@ evergreen_shrub_count = st.sidebar.number_input("🍃 계획 상록관목 수량
 play_area_plan = st.sidebar.number_input("🛝 계획 어린이놀이터 면적 (㎡)", min_value=0.0, value=0.0, step=10.0)
 sports_area_plan = st.sidebar.number_input("🏋️ 계획 주민운동시설 면적 (㎡)", min_value=0.0, value=0.0, step=10.0)
 bus_stop_plan = st.sidebar.number_input("🚌 계획 통학버스 정류장 (개소)", min_value=0, value=0, step=1)
-bike_parking_plan = st.sidebar.number_input("🚲 계획 자전거보관소 (대)", min_value=0, value=20, step=5)
+bike_parking_plan = st.sidebar.number_input("🚲 계획 자전거보관소 (대)", min_value=0, value=75, step=5)
 garden_area_plan = st.sidebar.number_input("🧑‍🌾 계획 텃밭/부속정원 면적 (㎡)", min_value=0.0, value=0.0, step=5.0)
 
 report_data = []
 
 # ---------------------------------------------------------
-# 법규 계산 로직 (주소 파싱 및 예외 처리 완벽 디버깅)
+# 법규 계산 로직 
 # ---------------------------------------------------------
 match = re.search(r'([가-힣]+(시|군|구))', project_address)
 local_gov = match.group(1) if match else "해당 지자체"
@@ -169,7 +171,6 @@ else:
     eco_val_str = f"해당 없음 / {eco_area_plan:.1f} %"
     eco_pass = "N/A"
 
-# [버그 수정 완료] 부대시설 세대수별 예외 판정 로직 완벽 교정
 if building_type != "공동주택 (아파트)":
     play_legal_text, play_val_str, play_pass = "해당사항 없음", "해당 없음", "N/A"
     sports_legal_text, sports_val_str, sports_pass = "해당사항 없음", "해당 없음", "N/A"
@@ -179,7 +180,7 @@ else:
     if household_count < 150:
         play_legal_text = "150세대 미만: 어린이놀이터 의무 설치 제외"
         play_val_str = f"해당 없음 / {play_area_plan:,.1f} ㎡"
-        play_pass = "N/A"  # 0을 입력해도 X가 아닌 ➖제외 처리
+        play_pass = "N/A"
     else:
         total_comm = household_count * 2.5 if household_count < 1000 else (household_count * 3.0) + 500
         play_legal_text = f"총량제 대상(의무: {total_comm:,.1f}㎡). 가이드: 200㎡+(세대수×1㎡)" if household_count < 1000 else f"총량제 대상(의무: {total_comm:,.1f}㎡). 가이드: 500㎡+(세대수×0.7㎡)"
@@ -190,7 +191,7 @@ else:
     if household_count < 300:
         sports_legal_text = "300세대 미만: 주민운동시설 의무 설치 제외"
         sports_val_str = f"해당 없음 / {sports_area_plan:,.1f} ㎡"
-        sports_pass = "N/A"  # 0을 입력해도 X가 아닌 ➖제외 처리
+        sports_pass = "N/A"
     else:
         sports_legal_text = "총량제 대상. 300세대 이상 필수 설치 대상 (종목별 규격 참조)"
         sports_val_str = f"총량내 확보 / {sports_area_plan:,.1f} ㎡"
@@ -204,7 +205,8 @@ else:
         bus_formula_text = "500세대 이상: 어린이 통학버스 유치원 회차공간 1개소 이상 설치 의무"
         bus_val_str, bus_pass = f"1 개소 / {bus_stop_plan} 개소", bus_stop_plan >= 1
 
-legal_bike_parking = math.ceil(parking_count * 0.20)
+# [핵심 수정] 자전거 주차대수 연산을 '계획 주차대수'가 아닌 '법정 주차대수'로 고정
+legal_bike_parking = math.ceil(legal_parking_count * 0.20)
 
 open_space_applicable_zones = ["일반주거지역", "준주거지역", "중심상업지역", "일반상업지역", "근린상업지역", "준공업지역"]
 open_space_applicable_buildings = ["업무시설 (오피스텔/일반업무)", "판매시설 (백화점/마트)", "기타 건축물"]
@@ -292,7 +294,7 @@ h3.markdown("**📊 법정요구 수치 / 내 계획**")
 h4.markdown("**📢 결과**")
 st.markdown("<div style='border-bottom: 2px solid #2E5A44; margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
-# 1. 면 검토 영역
+# 1. 면적 검토 영역
 if is_small_scale:
     landscape_metric_text = f"특례법에 따라 법정 대지면적 조경비율의 50% 완화 적용"
 else:
@@ -314,7 +316,7 @@ print_law_row("2. 식재 검토", " - 상록 관목", f"법정 관목 의무 수
 print_law_row("3. 부대시설 검토", "어린이놀이터", play_legal_text, law_community, play_val_str, play_pass)
 print_law_row("3. 부대시설 검토", "주민운동시설", sports_legal_text, law_community, sports_val_str, sports_pass)
 print_law_row("3. 부대시설 검토", "통학버스 정류장", bus_formula_text, law_bus_stop, bus_val_str, bus_pass)
-print_law_row("3. 부대시설 검토", "자전거 보관소", "전체 자동차 주차대수의 20% 이상 설치 의무", law_bike, f"{legal_bike_parking:,.0f} 대 / {bike_parking_plan:,.0f} 대", bike_parking_plan >= legal_bike_parking)
+print_law_row("3. 부대시설 검토", "자전거 보관소", "법정 자동차 주차대수의 20% 이상 설치 의무", law_bike, f"{legal_bike_parking:,.0f} 대 / {bike_parking_plan:,.0f} 대", bike_parking_plan >= legal_bike_parking)
 print_law_row("3. 부대시설 검토", "텃밭 / 부속정원", "설치 권장 (녹색건축인증 및 친환경 인센티브 조례 항목)", "녹색건축인증기준 지침 가이드", f"권장 / {garden_area_plan:,.1f} ㎡", True)
 
 # ---------------------------------------------------------
