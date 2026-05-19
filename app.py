@@ -79,19 +79,18 @@ elif "천안" in region:
     else: req_landscape_ratio = 0.10
 else:
     law_article = f"{region} 건축조례 조경 의무 조항"
-    req_landscape_ratio = 0.12 # 전국 지자체 평균 디폴트값 세팅
+    req_landscape_ratio = 0.12
 
-# [에러 해결] 누락되었던 자연지반 기준 비율 복구
 req_natural_ratio = 0.10 
 
-# 실무용 정밀 법적근거 매핑
+# [수정] 특성수 10%의 상위 근거(조경기준)와 지역 적용(시목 등)을 완벽히 분리 매핑
 law_landscape = f"{law_article} 및 건축법 제42조"
 law_natural = "국토교통부 조경기준 제12조 (자연지반 식재 등)"
 law_eco = "환경영향평가법 제22조 및 지자체 지구단위계획 수립지침"
 law_open_space = "건축법 제43조 및 동법 시행령 제27조의2"
 law_total_tree = "국토교통부 조경기준 제10조 (식재수량 및 기준)"
 law_evergreen = "국토교통부 조경기준 제13조 (상록수 식재 비율)"
-law_special = f"{region} 조경협의 심의 가이드라인"
+law_special = f"국토교통부 조경기준 제13조 및 {region} 권장수종(시목 등)"
 law_community = "주택건설기준 등에 관한 규정 제55조의2 (주민공동시설)"
 law_bus_stop = "주택건설기준 등에 관한 규정 제26조제6항 (안전회차공간)"
 law_bike = "자전거 이용 활성화에 관한 법률 시행령 제7조 [별표 1]"
@@ -177,7 +176,7 @@ with col_link3:
 law_list = [
     {"분류": "상위 법률", "근거 법규 및 지침명": "건축법 제42조 및 동법 시행령 제27조", "시행/개정년도": "2026년 현행 법률"},
     {"분류": "지자체 조례", "근거 법규 및 지침명": f"{region} 건축조례 조경 의무 기준 조항", "시행/개정년도": "각 지자체 최신 조례"},
-    {"분류": "정부 고시", "근거 법규 및 지침명": "국토교통부 조경기준 고시 제2024-110호 (식재 총량/상록수 비율)", "시행/개정년도": "2024년 고시"},
+    {"분류": "정부 고시", "근거 법규 및 지침명": "국토교통부 조경기준 (식재 총량, 상록수 20% 및 특성수 10% 규정)", "시행/개정년도": "2024년 고시"},
     {"분류": "대통령령", "근거 법규 및 지침명": "주택건설기준 등에 관한 규정 제55조의2 (주민공동시설 총량제)", "시행/개정년도": "2025년 최신 개정"},
     {"분류": "국토부 훈령", "근거 법규 및 지침명": "지구단위계획 수립지침 제4편 (환경·녹지 및 공공보행통로 기준)", "시행/개정년도": "2025년 개정"},
     {"분류": "환경부 지침", "근거 법규 및 지침명": "환경영향평가 생태면적률 적용 지침 (공동주택 및 개발사업용)", "시행/개정년도": "2024년 지침"},
@@ -236,7 +235,7 @@ print_law_row("1. 면적 검토", "공개 공지", open_space_text, law_open_spa
 # 2. 식재 검토 영역
 print_law_row("2. 식재 검토", "전체 교목 수량", "의무조경면적 1㎡당 최소 0.2주 식재", law_total_tree, f"{legal_total_tree:,.0f} 주 / {tree_count:,.0f} 주", tree_count >= legal_total_tree)
 print_law_row("2. 식재 검토", " - 상록 교목", f"법정 교목 의무 수량의 {req_evergreen_ratio*100}% 이상 필수 상록수 식재", law_evergreen, f"{legal_evergreen_tree:,.0f} 주 / {evergreen_tree_count:,.0f} 주", evergreen_tree_count >= legal_evergreen_tree)
-print_law_row("2. 식재 검토", " - 특성수 수량", f"법정 교목 의무 수량의 {req_special_ratio*100}% 이상 지자체 권장수 적용", law_special, f"{legal_special_tree:,.0f} 주 / {special_tree_count:,.0f} 주", special_tree_count >= legal_special_tree)
+print_law_row("2. 식재 검토", " - 특성수 수량", f"법정 교목 의무 수량의 {req_special_ratio*100}% 이상 국토부 기준 및 지자체 시목/향토수종 적용", law_special, f"{legal_special_tree:,.0f} 주 / {special_tree_count:,.0f} 주", special_tree_count >= legal_special_tree)
 print_law_row("2. 식재 검토", "전체 관목 수량", "의무조경면적 1㎡당 최소 1.0주 식재", law_total_tree, f"{legal_total_shrub:,.0f} 주 / {shrub_count:,.0f} 주", shrub_count >= legal_total_shrub)
 print_law_row("2. 식재 검토", " - 상록 관목", f"법정 관목 의무 수량의 {req_evergreen_shrub_ratio*100}% 이상 필수 상록수 식재", law_evergreen, f"{legal_evergreen_shrub:,.0f} 주 / {evergreen_shrub_count:,.0f} 주", evergreen_shrub_count >= legal_evergreen_shrub)
 
