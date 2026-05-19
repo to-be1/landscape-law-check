@@ -215,7 +215,8 @@ else:
 # 출력 및 데이터 수집 헬퍼 함수
 # ---------------------------------------------------------
 def print_row(category, title, legal_text, law_source, legal_plan_compare_str, is_pass):
-    c1, c2, c3, c4 = st.columns([1, 1.8, 2.2, 0.8])
+    # 가로 비율을 널찍하게 늘려 글자 잘림과 줄바꿈 현상을 완벽하게 해결합니다.
+    c1, c2, c3, c4 = st.columns([1.2, 3.2, 2.2, 0.6])
     c1.metric("항목", title)
     c2.metric("법적 기준 및 산식", legal_text)
     with c2: st.caption(f"📍 근거: {law_source}")
