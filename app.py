@@ -88,14 +88,28 @@ fl_area = st.sidebar.number_input("🏢 연면적 (㎡)", value=35000.0)
 parking = st.sidebar.number_input("🚙 법정주차대수", value=100)
 household_count = st.sidebar.number_input("👨‍👩‍👧‍👦 세대수 (아파트용)", value=321)
 
+# ---------------------------------------------------------
+# 3. 사이드바: 3. 특례 및 조례 덮어쓰기 (도움말 UI 강화)
+# ---------------------------------------------------------
 st.sidebar.markdown("---")
 st.sidebar.header("📋 3. 특례 및 조례 덮어쓰기")
-is_district_unit = st.sidebar.checkbox("🚀 지구단위계획 우선 적용 모드")
+
+is_district_unit = st.sidebar.checkbox(
+    "🚀 지구단위계획 우선 적용 모드", 
+    help="[언제 체크하나요?]\n토지이음(eum.go.kr) 조회 결과 해당 대지가 '지구단위계획구역'으로 지정된 경우 체크합니다. 건축조례보다 지구단위계획 지침의 조경률이 최우선 적용됩니다."
+)
 target_landscape_ratio = st.sidebar.number_input("🎯 지구단위계획 조경률(%)", value=20.0, step=1.0) / 100.0 if is_district_unit else 0.15
 
-use_dynamic_parsing = st.sidebar.checkbox("⚙️ 조례 원문 파싱 모드")
+use_dynamic_parsing = st.sidebar.checkbox(
+    "⚙️ 조례 원문 파싱 모드",
+    help="[언제 체크하나요?]\n시스템 DB에 없는 타 지자체 프로젝트이거나, 법령정보센터에서 방금 개정된 최신 조례 원문을 직접 복사/붙여넣기하여 계산하고 싶을 때 체크합니다."
+)
 raw_law_text = st.sidebar.text_area("📄 조례 원문 붙여넣기", height=80) if use_dynamic_parsing else ""
-is_small_scale = st.sidebar.checkbox("🏘️ 소규모재건축 특례 완화(1/2) 적용")
+
+is_small_scale = st.sidebar.checkbox(
+    "🏘️ 소규모재건축 특례 완화(1/2) 적용",
+    help="[언제 체크하나요?]\n「빈집 및 소규모주택 정비에 관한 특례법」을 적용받는 가로주택정비사업이나 소규모재건축(대지면적 1만㎡ 미만, 200세대 미만 등)일 때 체크합니다. 법정 조경면적이 50% 완화됩니다."
+)
 
 # ---------------------------------------------------------
 # 4. 사이드바: 4. 계획 수치 입력
