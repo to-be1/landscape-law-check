@@ -227,8 +227,23 @@ else:
         library_pass = library_area_plan >= 100
 
 # ---------------------------------------------------------
-# 6. 출력 모듈 구성
+# 6. 출력 모듈 구성 (포털 링크 및 법규 리스트 복구)
 # ---------------------------------------------------------
+st.markdown("### 🔍 실시간 인허가 연동 근거법규 ALL 리스트 및 조회 포털")
+col_link1, col_link2, col_link3 = st.columns(3)
+with col_link1: st.link_button("🌐 국가법령정보센터", "https://www.law.go.kr/")
+with col_link2: st.link_button("🗺️ 토지이음 (지구단위계획)", "http://www.eum.go.kr/")
+with col_link3: st.link_button("🍃 환경영향평가 정보시스템", "https://www.eiass.go.kr/")
+
+law_list = [
+    {"분류": "지자체/도시계획 조례", "근거 법규 및 지침명": f"{law_src}", "비고": f"{city} 최신 조례 적용"},
+    {"분류": "상위 법률", "근거 법규 및 지침명": "건축법 시행령 제27조 (옥상조경 인정 기준)", "비고": "대지면적 한도 반영"},
+    {"분류": "대통령령", "근거 법규 및 지침명": "주택건설기준 등에 관한 규정 제55조의2", "비고": "주민공동시설 총량제"},
+    {"분류": "국토부 가이드라인", "근거 법규 및 지침명": "주민공동시설 설치총량제 운용 가이드라인", "비고": "세대수별 최소면적"},
+    {"분류": "정부 고시", "근거 법규 및 지침명": "국토교통부 조경기준 (식재 총량, 상록수 20%)", "비고": "현행 기준"}
+]
+st.table(pd.DataFrame(law_list))
+
 report_data = []
 def print_law_row(category, title, legal_text, law_source, legal_plan_compare_str, is_pass):
     c1, c2, c3, c4 = st.columns([1.5, 3.2, 2.3, 0.8])
