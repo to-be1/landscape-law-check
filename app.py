@@ -127,21 +127,24 @@ bike_parking_plan = st.sidebar.number_input("🚲 자전거보관소 (대)", val
 def get_landscape_ratio(c, d, f_area, z):
     if use_dynamic_parsing and raw_law_text:
         match = re.search(r'대지면적의\s*(\d+(?:\.\d+)?)\s*(?:퍼센트|%)', raw_law_text)
-        if match: return float(match.group(1)) / 100.0, "원문 파싱 적용"
+        if match: return float(match.group(1)) / 100.0, f"[동적 파싱 적용] {d} 조례 원문 기준"
     
-    if is_district_unit: return target_landscape_ratio, "지구단위계획 지침 우선"
+    if is_district_unit: return target_landscape_ratio, "지구단위계획 수립지침 최우선 적용"
     
-    if c == "서울특별시": return 0.15 if f_area >= 2000 else 0.10, "서울특별시 건축조례"
-    if d == "부천시": return 0.20, "부천시 건축조례"
-    if d == "수원시": return 0.05 if "중심상업" in z else 0.18 if f_area >= 5000 else 0.15, "수원시 건축조례"
-    if d == "전주시": return 0.18, "전주시 건축조례"
+    if c == "서울특별시": return 0.15 if f_area >= 2000 else 0.10, "서울특별시 건축조례 제24조"
+    if c == "인천광역시": return 0.15 if f_area >= 2000 else 0.10 if f_area >= 1000 else 0.05, "인천광역시 건축조례 제27조"
+    if d == "부천시": return 0.20, "부천시 건축조례 제24조"
+    if d == "수원시": return 0.05 if "중심상업" in z else 0.18 if f_area >= 5000 else 0.15, "수원시 건축조례 제31조"
+    if d == "전주시": return 0.18, "전주시 건축조례 제23조"
     
-    return 0.15, "국토부 조경기준(일반)"
+    return 0.15, "국토교통부 건축법 일반 조경기준"
 
 ratio, law_src = get_landscape_ratio(city, district, fl_area, zone)
 if is_small_scale: 
     ratio *= 0.5
-    law_src = "소규모주택정비법(1/2완화) + " + law_src
+    law_landscape = f"소규모주택정비법 시행령 제40조 (1/2 완화) 및 {law_src}"
+else:
+    law_landscape = f"{law_src} 및 건축법 제42조"
 
 legal_landscape_area = area * ratio
 rooftop_recognized = rooftop_plan * (2/3)
@@ -155,6 +158,16 @@ legal_evergreen_tree = math.ceil(legal_total_tree * 0.2)
 legal_special_tree = math.ceil(legal_total_tree * 0.1)
 legal_total_shrub = math.ceil(legal_landscape_area * 1.0)
 legal_bike_parking = math.ceil(parking * 0.20)
+
+# 법적 근거 명확화 텍스트 (복원 완료)
+law_natural = "국토교통부 조경기준 제12조 (자연지반 식재 등)"
+law_rooftop = "건축법 시행령 제27조 (옥상조경 인정 기준)"
+law_total_tree = "국토교통부 조경기준 제10조 (식재수량 및 기준)"
+law_evergreen = "국토교통부 조경기준 제13조 (상록수 식재 비율)"
+law_community = "주택건설기준 등에 관한 규정 제55조의2 (주민공동시설)"
+law_guideline = "국토교통부 주민공동시설 설치총량제 운용 가이드라인"
+law_bike = "자전거 이용 활성화에 관한 법률 시행령 제7조 [별표 1]"
+law_soil_depth = "국토교통부 조경기준 제12조 (식재토심)"
 
 # 주민공동시설 총량제 판별 로직
 if b_type != "공동주택 (아파트)":
@@ -227,7 +240,7 @@ else:
         library_pass = library_area_plan >= 100
 
 # ---------------------------------------------------------
-# 6. 출력 모듈 구성 (포털 링크 및 법규 리스트 복구)
+# 6. 출력 모듈 구성 (포털 링크 및 법규 리스트 복원)
 # ---------------------------------------------------------
 st.markdown("### 🔍 실시간 인허가 연동 근거법규 ALL 리스트 및 조회 포털")
 col_link1, col_link2, col_link3 = st.columns(3)
@@ -239,8 +252,8 @@ law_list = [
     {"분류": "지자체/도시계획 조례", "근거 법규 및 지침명": f"{law_src}", "비고": f"{city} 최신 조례 적용"},
     {"분류": "상위 법률", "근거 법규 및 지침명": "건축법 시행령 제27조 (옥상조경 인정 기준)", "비고": "대지면적 한도 반영"},
     {"분류": "대통령령", "근거 법규 및 지침명": "주택건설기준 등에 관한 규정 제55조의2", "비고": "주민공동시설 총량제"},
-    {"분류": "국토부 가이드라인", "근거 법규 및 지침명": "주민공동시설 설치총량제 운용 가이드라인", "비고": "세대수별 최소면적"},
-    {"분류": "정부 고시", "근거 법규 및 지침명": "국토교통부 조경기준 (식재 총량, 상록수 20%)", "비고": "현행 기준"}
+    {"분류": "국토부 지침", "근거 법규 및 지침명": "주민공동시설 설치총량제 운용 가이드라인", "비고": "세대수별 최소면적"},
+    {"분류": "정부 고시", "근거 법규 및 지침명": "국토교통부 조경기준 (식재수량, 상록수, 토심)", "비고": "조경 설계 핵심"}
 ]
 st.table(pd.DataFrame(law_list))
 
@@ -281,27 +294,27 @@ h4.markdown("**📢 결과**")
 st.markdown("<div style='border-bottom: 2px solid #2E5A44; margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
 # 1. 면적
-print_law_row("1. 면적", "최종 인정 조경면적", f"대지면적의 {ratio*100}% 이상 확보", "조례 및 건축법", f"{legal_landscape_area:,.1f} ㎡ / {total_recognized_landscape:,.1f} ㎡", total_recognized_landscape >= legal_landscape_area)
+print_law_row("1. 면적", "최종 인정 조경면적", f"대지면적의 {ratio*100}% 이상 확보", law_landscape, f"{legal_landscape_area:,.1f} ㎡ / {total_recognized_landscape:,.1f} ㎡", total_recognized_landscape >= legal_landscape_area)
 if rooftop_plan > 0:
-    print_law_row("1. 면적", " └ 옥상조경 산입", f"2/3 인정하되, 법정 조경면적 50%({rooftop_max_allowable:,.1f}㎡) 한도", "건축법 시행령", f"최대 {rooftop_max_allowable:,.1f} ㎡ / {applied_rooftop_area:,.1f} ㎡ 인정", True)
-print_law_row("1. 면적", "자연 지반", "의무 조경면적의 10% 이상", "조경기준", f"{legal_natural_ground:,.1f} ㎡ / {natural_ground_plan:,.1f} ㎡", natural_ground_plan >= legal_natural_ground)
+    print_law_row("1. 면적", " └ 옥상조경 산입", f"2/3 인정하되, 법정 조경면적 50%({rooftop_max_allowable:,.1f}㎡) 한도", law_rooftop, f"최대 {rooftop_max_allowable:,.1f} ㎡ / {applied_rooftop_area:,.1f} ㎡ 인정", True)
+print_law_row("1. 면적", "자연 지반", "의무 조경면적의 10% 이상", law_natural, f"{legal_natural_ground:,.1f} ㎡ / {natural_ground_plan:,.1f} ㎡", natural_ground_plan >= legal_natural_ground)
 
 # 2. 식재
-print_law_row("2. 식재", "전체 교목 수량", "조경 1㎡당 0.2주", "조경기준", f"{legal_total_tree:,.0f} 주 / {tree_count:,.0f} 주", tree_count >= legal_total_tree)
-print_law_row("2. 식재", " └ 상록 교목", "교목 의무 수량의 20% 이상", "조경기준", f"{legal_evergreen_tree:,.0f} 주 / {evergreen_tree_count:,.0f} 주", evergreen_tree_count >= legal_evergreen_tree)
-print_law_row("2. 식재", "전체 관목 수량", "조경 1㎡당 1.0주", "조경기준", f"{legal_total_shrub:,.0f} 주 / {shrub_count:,.0f} 주", shrub_count >= legal_total_shrub)
+print_law_row("2. 식재", "전체 교목 수량", "조경 1㎡당 0.2주", law_total_tree, f"{legal_total_tree:,.0f} 주 / {tree_count:,.0f} 주", tree_count >= legal_total_tree)
+print_law_row("2. 식재", " └ 상록 교목", "교목 의무 수량의 20% 이상", law_evergreen, f"{legal_evergreen_tree:,.0f} 주 / {evergreen_tree_count:,.0f} 주", evergreen_tree_count >= legal_evergreen_tree)
+print_law_row("2. 식재", "전체 관목 수량", "조경 1㎡당 1.0주", law_total_tree, f"{legal_total_shrub:,.0f} 주 / {shrub_count:,.0f} 주", shrub_count >= legal_total_shrub)
 
 # 3. 부대시설 (총량제 가이드라인 적용)
 if b_type == "공동주택 (아파트)":
-    print_law_row("3. 주민시설", "총량 면적", comm_total_text, "주택건설기준 규정", comm_total_val, comm_total_pass)
-    print_law_row("3. 주민시설", " ├ 경로당", senior_text, "국토부 가이드라인", senior_val, senior_pass)
-    print_law_row("3. 주민시설", " ├ 어린이놀이터", play_text, "국토부 가이드라인", play_val, play_pass)
-    print_law_row("3. 주민시설", " ├ 어린이집", daycare_text, "국토부 가이드라인", daycare_val, daycare_pass)
-    print_law_row("3. 주민시설", " ├ 주민운동시설", sports_text, "국토부 가이드라인", sports_val, sports_pass)
-    print_law_row("3. 주민시설", " └ 작은도서관", library_text, "국토부 가이드라인", library_val, library_pass)
+    print_law_row("3. 주민시설", "총량 면적", comm_total_text, law_community, comm_total_val, comm_total_pass)
+    print_law_row("3. 주민시설", " ├ 경로당", senior_text, law_guideline, senior_val, senior_pass)
+    print_law_row("3. 주민시설", " ├ 어린이놀이터", play_text, law_guideline, play_val, play_pass)
+    print_law_row("3. 주민시설", " ├ 어린이집", daycare_text, law_guideline, daycare_val, daycare_pass)
+    print_law_row("3. 주민시설", " ├ 주민운동시설", sports_text, law_guideline, sports_val, sports_pass)
+    print_law_row("3. 주민시설", " └ 작은도서관", library_text, law_guideline, library_val, library_pass)
 
-print_law_row("4. 기타", "자전거 보관소", "법정 주차대수의 20% 이상", "자전거이용법", f"{legal_bike_parking:,.0f} 대 / {bike_parking_plan:,.0f} 대", bike_parking_plan >= legal_bike_parking)
-print_law_row("4. 기타", "식재 토심", "아파트 교목 0.9m (인공 1.2m 권장)", "조경기준", "권장 사양 확인", True)
+print_law_row("4. 기타", "자전거 보관소", "법정 주차대수의 20% 이상", law_bike, f"{legal_bike_parking:,.0f} 대 / {bike_parking_plan:,.0f} 대", bike_parking_plan >= legal_bike_parking)
+print_law_row("4. 기타", "식재 토심", "아파트 교목 0.9m (인공 1.2m 권장)", law_soil_depth, "권장 사양 확인", True)
 
 st.markdown("---")
 df_report = pd.DataFrame(report_data)
