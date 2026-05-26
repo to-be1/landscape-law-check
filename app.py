@@ -114,7 +114,9 @@ st.sidebar.header("🌳 4. 조경 계획 수치")
 landscaping_area_plan = st.sidebar.number_input("🟩 지상 계획 조경면적 (㎡)", value=3000.0, step=50.0)
 rooftop_plan = st.sidebar.number_input("🏙️ 계획 옥상조경면적 (㎡)", value=0.0, step=50.0)
 natural_ground_plan = st.sidebar.number_input("🟫 계획 자연지반면적 (㎡)", value=400.0, step=10.0)
-eco_area_plan = st.sidebar.slider("🍃 계획 생태면적률 (%)", min_value=0.0, max_value=100.0, value=23.5)
+
+# 💡 슬라이더 대신 정밀한 숫자 입력창으로 개선
+eco_area_plan = st.sidebar.number_input("🍃 계획 생태면적률 (%)", min_value=0.0, max_value=100.0, value=23.5, step=0.1)
 
 tree_count = st.sidebar.number_input("🌳 계획 교목 수량 (주)", value=600)
 evergreen_tree_count = st.sidebar.number_input("🌲 상록교목 수량 (주)", value=120)
@@ -279,7 +281,7 @@ else:
         library_pass = library_area_plan >= 100
 
 # ---------------------------------------------------------
-# 6. 출력 모듈 구성 (UI 디자인 대폭 개선)
+# 6. 출력 모듈 구성 (UI 디자인 유지)
 # ---------------------------------------------------------
 st.markdown("### 🔍 실시간 인허가 연동 근거법규 ALL 리스트 및 조회 포털")
 col_link1, col_link2, col_link3 = st.columns(3)
@@ -299,7 +301,6 @@ st.table(pd.DataFrame(law_list))
 
 report_data = []
 
-# 💡 가독성을 극대화한 새로운 UI 렌더링 함수
 def print_law_row(category, title, legal_text, law_source, req_str, plan_str, is_pass):
     c1, c2, c3, c4 = st.columns([1.5, 3.2, 2.3, 0.8])
     with c1:
@@ -309,7 +310,6 @@ def print_law_row(category, title, legal_text, law_source, req_str, plan_str, is
         st.write(legal_text)
         st.caption(f"📍 근거: {law_source}")
     with c3:
-        # 가독성을 높인 법정/계획 분리 박스 UI 적용
         st.markdown(f"""
         <div style='background-color:#f8f9fa; padding:10px; border-radius:5px; border-left: 4px solid #2E5A44;'>
             <div style='font-size:0.9em; color:#555; margin-bottom:4px;'>⚖️ <b>법정:</b> {req_str}</div>
@@ -344,21 +344,20 @@ st.markdown("<div style='border-bottom: 2px solid #2E5A44; margin-bottom: 15px;'
 plan_landscape_ratio = (total_recognized_landscape / area) * 100 if area > 0 else 0
 plan_natural_ratio = (natural_ground_plan / legal_landscape_area) * 100 if legal_landscape_area > 0 else 0
 
-# 1. 면적 (UI 개선 함수 적용)
+# 1. 면적
 print_law_row("1. 면적", "최종 인정 조경면적", f"대지면적의 {ratio*100}% 이상 확보", law_landscape, f"{legal_landscape_area:,.1f} ㎡", f"{total_recognized_landscape:,.1f} ㎡ (대지면적의 {plan_landscape_ratio:.1f}%)", total_recognized_landscape >= legal_landscape_area)
 if rooftop_plan > 0:
     print_law_row("1. 면적", " └ 옥상조경 산입", f"2/3 인정하되, 법정 조경면적 50%({rooftop_max_allowable:,.1f}㎡) 한도", law_rooftop, f"최대 {rooftop_max_allowable:,.1f} ㎡ 한도", f"{applied_rooftop_area:,.1f} ㎡ 인정", True)
 print_law_row("1. 면적", "자연 지반", "의무 조경면적의 10% 이상", law_natural, f"{legal_natural_ground:,.1f} ㎡", f"{natural_ground_plan:,.1f} ㎡ (의무조경의 {plan_natural_ratio:.1f}%)", natural_ground_plan >= legal_natural_ground)
 
-# 💡 생태면적률 (UI 개선 함수 적용)
 print_law_row("1. 면적", "생태면적률", eco_legal_text, law_eco, eco_req_str, eco_plan_str, eco_pass)
 
-# 2. 식재 (UI 개선 함수 적용)
+# 2. 식재
 print_law_row("2. 식재", "전체 교목 수량", "조경 1㎡당 0.2주", law_total_tree, f"{legal_total_tree:,.0f} 주", f"{tree_count:,.0f} 주", tree_count >= legal_total_tree)
 print_law_row("2. 식재", " └ 상록 교목", "교목 의무 수량의 20% 이상", law_evergreen, f"{legal_evergreen_tree:,.0f} 주", f"{evergreen_tree_count:,.0f} 주", evergreen_tree_count >= legal_evergreen_tree)
 print_law_row("2. 식재", "전체 관목 수량", "조경 1㎡당 1.0주", law_total_tree, f"{legal_total_shrub:,.0f} 주", f"{shrub_count:,.0f} 주", shrub_count >= legal_total_shrub)
 
-# 3. 부대시설 (UI 개선 함수 적용)
+# 3. 부대시설
 if b_type == "공동주택 (아파트)":
     print_law_row("3. 주민시설", "총량 면적", comm_total_text, law_community, comm_req_str, comm_plan_str, comm_pass)
     print_law_row("3. 주민시설", " ├ 경로당", senior_text, law_guideline, senior_req_str, senior_plan_str, senior_pass)
