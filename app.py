@@ -88,12 +88,8 @@ fl_area = st.sidebar.number_input("🏢 연면적 (㎡)", value=35000.0)
 parking = st.sidebar.number_input("🚙 법정주차대수", value=100)
 household_count = st.sidebar.number_input("👨‍👩‍👧‍👦 세대수 (아파트용)", value=321)
 
-# ---------------------------------------------------------
-# 3. 사이드바: 3. 특례 및 조례 덮어쓰기 (도움말 UI 강화)
-# ---------------------------------------------------------
 st.sidebar.markdown("---")
 st.sidebar.header("📋 3. 특례 및 조례 덮어쓰기")
-
 is_district_unit = st.sidebar.checkbox(
     "🚀 지구단위계획 우선 적용 모드", 
     help="[언제 체크하나요?]\n토지이음(eum.go.kr) 조회 결과 해당 대지가 '지구단위계획구역'으로 지정된 경우 체크합니다. 건축조례보다 지구단위계획 지침의 조경률이 최우선 적용됩니다."
@@ -105,7 +101,6 @@ use_dynamic_parsing = st.sidebar.checkbox(
     help="[언제 체크하나요?]\n시스템 DB에 없는 타 지자체 프로젝트이거나, 법령정보센터에서 방금 개정된 최신 조례 원문을 직접 복사/붙여넣기하여 계산하고 싶을 때 체크합니다."
 )
 raw_law_text = st.sidebar.text_area("📄 조례 원문 붙여넣기", height=80) if use_dynamic_parsing else ""
-
 is_small_scale = st.sidebar.checkbox(
     "🏘️ 소규모재건축 특례 완화(1/2) 적용",
     help="[언제 체크하나요?]\n「빈집 및 소규모주택 정비에 관한 특례법」을 적용받는 가로주택정비사업이나 소규모재건축(대지면적 1만㎡ 미만, 200세대 미만 등)일 때 체크합니다. 법정 조경면적이 50% 완화됩니다."
@@ -173,15 +168,26 @@ legal_special_tree = math.ceil(legal_total_tree * 0.1)
 legal_total_shrub = math.ceil(legal_landscape_area * 1.0)
 legal_bike_parking = math.ceil(parking * 0.20)
 
-# 법적 근거 명확화 텍스트 (복원 완료)
+# 법적 근거 명확화 텍스트
 law_natural = "국토교통부 조경기준 제12조 (자연지반 식재 등)"
 law_rooftop = "건축법 시행령 제27조 (옥상조경 인정 기준)"
+law_eco = "환경부 고시 생태면적률 적용 지침"
 law_total_tree = "국토교통부 조경기준 제10조 (식재수량 및 기준)"
 law_evergreen = "국토교통부 조경기준 제13조 (상록수 식재 비율)"
 law_community = "주택건설기준 등에 관한 규정 제55조의2 (주민공동시설)"
 law_guideline = "국토교통부 주민공동시설 설치총량제 운용 가이드라인"
 law_bike = "자전거 이용 활성화에 관한 법률 시행령 제7조 [별표 1]"
 law_soil_depth = "국토교통부 조경기준 제12조 (식재토심)"
+
+# 생태면적률 판별 로직 추가
+if is_small_scale:
+    eco_legal_text = "소규모 사업 등 환경영향평가 비대상 (의무 제외)"
+    eco_val_str = f"해당 없음 / {eco_area_plan:.1f} %"
+    eco_pass = "N/A"
+else:
+    eco_legal_text = "대지면적의 30.0% 이상 도입 권장"
+    eco_val_str = f"30.0 % / {eco_area_plan:.1f} %"
+    eco_pass = eco_area_plan >= 30.0
 
 # 주민공동시설 총량제 판별 로직
 if b_type != "공동주택 (아파트)":
@@ -254,7 +260,7 @@ else:
         library_pass = library_area_plan >= 100
 
 # ---------------------------------------------------------
-# 6. 출력 모듈 구성 (포털 링크 및 법규 리스트 복원)
+# 6. 출력 모듈 구성 (포털 링크 및 법규 리스트)
 # ---------------------------------------------------------
 st.markdown("### 🔍 실시간 인허가 연동 근거법규 ALL 리스트 및 조회 포털")
 col_link1, col_link2, col_link3 = st.columns(3)
@@ -266,6 +272,7 @@ law_list = [
     {"분류": "지자체/도시계획 조례", "근거 법규 및 지침명": f"{law_src}", "비고": f"{city} 최신 조례 적용"},
     {"분류": "상위 법률", "근거 법규 및 지침명": "건축법 시행령 제27조 (옥상조경 인정 기준)", "비고": "대지면적 한도 반영"},
     {"분류": "대통령령", "근거 법규 및 지침명": "주택건설기준 등에 관한 규정 제55조의2", "비고": "주민공동시설 총량제"},
+    {"분류": "환경부 고시", "근거 법규 및 지침명": "생태면적률 적용 지침", "비고": "환경영향평가 대상"},
     {"분류": "국토부 지침", "근거 법규 및 지침명": "주민공동시설 설치총량제 운용 가이드라인", "비고": "세대수별 최소면적"},
     {"분류": "정부 고시", "근거 법규 및 지침명": "국토교통부 조경기준 (식재수량, 상록수, 토심)", "비고": "조경 설계 핵심"}
 ]
@@ -307,11 +314,18 @@ h3.markdown("**📊 법정요구 수치 / 내 계획**")
 h4.markdown("**📢 결과**")
 st.markdown("<div style='border-bottom: 2px solid #2E5A44; margin-bottom: 15px;'></div>", unsafe_allow_html=True)
 
+# 💡 [비율(%) 자동 계산 로직]
+plan_landscape_ratio = (total_recognized_landscape / area) * 100 if area > 0 else 0
+plan_natural_ratio = (natural_ground_plan / legal_landscape_area) * 100 if legal_landscape_area > 0 else 0
+
 # 1. 면적
-print_law_row("1. 면적", "최종 인정 조경면적", f"대지면적의 {ratio*100}% 이상 확보", law_landscape, f"{legal_landscape_area:,.1f} ㎡ / {total_recognized_landscape:,.1f} ㎡", total_recognized_landscape >= legal_landscape_area)
+print_law_row("1. 면적", "최종 인정 조경면적", f"대지면적의 {ratio*100}% 이상 확보", law_landscape, f"{legal_landscape_area:,.1f} ㎡ / {total_recognized_landscape:,.1f} ㎡ (대지면적의 {plan_landscape_ratio:.1f}%)", total_recognized_landscape >= legal_landscape_area)
 if rooftop_plan > 0:
     print_law_row("1. 면적", " └ 옥상조경 산입", f"2/3 인정하되, 법정 조경면적 50%({rooftop_max_allowable:,.1f}㎡) 한도", law_rooftop, f"최대 {rooftop_max_allowable:,.1f} ㎡ / {applied_rooftop_area:,.1f} ㎡ 인정", True)
-print_law_row("1. 면적", "자연 지반", "의무 조경면적의 10% 이상", law_natural, f"{legal_natural_ground:,.1f} ㎡ / {natural_ground_plan:,.1f} ㎡", natural_ground_plan >= legal_natural_ground)
+print_law_row("1. 면적", "자연 지반", "의무 조경면적의 10% 이상", law_natural, f"{legal_natural_ground:,.1f} ㎡ / {natural_ground_plan:,.1f} ㎡ (의무조경의 {plan_natural_ratio:.1f}%)", natural_ground_plan >= legal_natural_ground)
+
+# 💡 생태면적률 복구 
+print_law_row("1. 면적", "생태면적률", eco_legal_text, law_eco, eco_val_str, eco_pass)
 
 # 2. 식재
 print_law_row("2. 식재", "전체 교목 수량", "조경 1㎡당 0.2주", law_total_tree, f"{legal_total_tree:,.0f} 주 / {tree_count:,.0f} 주", tree_count >= legal_total_tree)
